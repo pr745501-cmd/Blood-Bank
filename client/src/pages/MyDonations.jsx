@@ -193,8 +193,8 @@ export default function MyDonations() {
                 {tab === "overview" ? (
                   <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
                     {/* Overview: bar chart of monthly donations */}
-                    <div className="h-[260px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
+                    <div className="h-[260px] w-full" style={{ minHeight: 260 }}>
+                      <ResponsiveContainer width="100%" height="100%" minHeight={260} debounce={50}>
                         <BarChart data={monthly.length ? monthly : analyticsMonthly.map(m => ({ month: m.month, donations: m.count }))} barGap={12}>
                           <defs>
                             <linearGradient id="medicalGrad" x1="0" y1="0" x2="0" y2="1">
@@ -232,8 +232,8 @@ export default function MyDonations() {
                     {/* Analytics: units over 12 months area chart */}
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Units Donated — Last 12 Months</p>
-                      <div className="h-[200px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
+                      <div className="h-[200px] w-full" style={{ minHeight: 200 }}>
+                        <ResponsiveContainer width="100%" height="100%" minHeight={200} debounce={50}>
                           <AreaChart data={analyticsMonthly}>
                             <defs>
                               <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">

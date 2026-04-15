@@ -1,6 +1,5 @@
 import Camp from "../models/Camp.js";
 import CampRegistration from "../models/CampRegistration.js";
-import Donor from "../models/Donor.js"; // ✅ ADD THIS
 
 
 /* ================= CREATE CAMP ================= */
@@ -103,47 +102,6 @@ export const registerForCamp = async (req, res) => {
   }
 };
 
-
-/* ================= 🔥 UPDATE STATUS (MAIN FIX) ================= */
-export const updateCampStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    const registration = await CampRegistration.findById(id);
-
-    if (!registration) {
-      return res.status(404).json({ message: "Registration not found" });
-    }
-
-    const oldStatus = registration.status;
-
-    // ✅ update status
-    registration.status = status;
-    await registration.save();
-
-    // 🔥 ONLY when attended → update donor
-    if (status === "attended" && oldStatus !== "attended") {
-      const donor = await Donor.findOneAndUpdate(
-        { user: registration.userId }, // ⚠️ correct mapping
-        {
-          $inc: { donationCount: 1 },
-          $set: { lastDonationDate: new Date() }
-        },
-        { new: true }
-      );
-
-    }
-
-    res.json({
-      message: "Status updated successfully",
-      registration,
-    });
-
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
 
 
 /* ================= MY CAMPS ================= */

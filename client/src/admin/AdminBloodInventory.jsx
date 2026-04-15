@@ -863,7 +863,7 @@ export default function AdminBloodInventory() {
                   return (
                     <div key={item._id} className="flex flex-col items-center">
                       <div className="relative w-full" style={{ height: 120 }}>
-                        <ResponsiveContainer width="100%" height={120}>
+                        <ResponsiveContainer width="100%" height={120} debounce={50}>
                           <PieChart>
                             <Pie data={data} dataKey="value" innerRadius={35} outerRadius={50} paddingAngle={4} stroke="none">
                               <Cell fill={item.status === "Critical" ? "#ef4444" : item.status === "Low" ? "#f59e0b" : "#10b981"} />
@@ -888,7 +888,7 @@ export default function AdminBloodInventory() {
 
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
               <h2 className="text-base font-black text-slate-800 mb-6">Component Breakdown</h2>
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={280} debounce={50}>
                 <BarChart data={barData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 700 }} />

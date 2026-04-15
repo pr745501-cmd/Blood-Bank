@@ -18,7 +18,7 @@ import { Server } from "socket.io";
 
 /* ================= ROUTES ================= */
 
-import authRoutes from "./routes/authroutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import donorRoutes from "./routes/donorRoutes.js";
 import requestRoutes from "./routes/requestRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";

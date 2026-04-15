@@ -19,6 +19,7 @@ router.delete("/:id", verifyToken, isAdmin, deleteCamp);
 /* ================= USER ROUTES ================= */
 router.get("/", getAllCamps);
 router.get("/my", verifyToken, getMyCamps);
+router.post("/register", verifyToken, registerForCamp);
 
 // Cancel a registration
 router.patch("/cancel/:regId", verifyToken, async (req, res) => {
@@ -30,6 +31,25 @@ router.patch("/cancel/:regId", verifyToken, async (req, res) => {
     reg.status = "cancelled";
     await reg.save();
     res.json({ message: "Registration cancelled" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// QR Code check-in — returns registration with donor + camp details
+router.get("/checkin/:regId", async (req, res) => {
+  try {
+    const reg = await CampRegistration.findById(req.params.regId)
+      .populate("userId", "name email bloodGroup")
+      .populate("campId");
+    if (!reg) return res.status(404).json({ message: "Registration not found" });
+    res.json({
+      registration: {
+        ...reg.toObject(),
+        donor: reg.userId,
+        camp: reg.campId,
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

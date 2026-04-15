@@ -187,7 +187,8 @@ export default function AdminAnalytics() {
             </div>
             <span className="text-xs bg-red-50 text-red-500 font-bold px-3 py-1 rounded-full border border-red-100">Live</span>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
+          <div style={{ width: "100%", height: 220 }}>
+          <ResponsiveContainer width="100%" height={220} debounce={50}>
             <AreaChart data={monthlyChart} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
@@ -204,6 +205,7 @@ export default function AdminAnalytics() {
                 activeDot={{ r: 6, fill: "#ef4444", stroke: "#fff", strokeWidth: 2 }} />
             </AreaChart>
           </ResponsiveContainer>
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
@@ -217,7 +219,7 @@ export default function AdminAnalytics() {
             </div>
           ) : (
             <>
-              <ResponsiveContainer width="100%" height={160}>
+              <ResponsiveContainer width="100%" height={160} debounce={50}>
                 <PieChart>
                   <Pie data={bloodData} dataKey="donors" nameKey="group" innerRadius={45} outerRadius={70} paddingAngle={3} stroke="none">
                     {bloodData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
@@ -247,7 +249,7 @@ export default function AdminAnalytics() {
             <h2 className="font-black text-slate-800">Request Status</h2>
             <p className="text-xs text-slate-400 mt-0.5">Breakdown by status</p>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={200} debounce={50}>
             <BarChart data={statusData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 700 }} />
@@ -290,7 +292,7 @@ export default function AdminAnalytics() {
             <h2 className="font-black text-slate-800">Donors per Blood Group</h2>
             <p className="text-xs text-slate-400 mt-0.5">Supply overview</p>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={200} debounce={50}>
             <BarChart data={bloodData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis dataKey="group" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8", fontWeight: 700 }} />

@@ -18,7 +18,7 @@ import API from "../services/api.jsx";
 // ── Shared Chart Components ──
 const MiniTrendChart = ({ data }) => (
   <div className="h-32 w-full">
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height={128} debounce={50}>
       <AreaChart data={data} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="colorDon" x1="0" y1="0" x2="0" y2="1">
@@ -34,7 +34,7 @@ const MiniTrendChart = ({ data }) => (
 
 const InventoryBarChart = ({ data }) => (
   <div className="h-48 w-full">
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height={192} debounce={50}>
       <BarChart data={data}>
         <XAxis dataKey="bloodType" hide={false} axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
         <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />

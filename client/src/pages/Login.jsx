@@ -4,12 +4,9 @@ import axios from "axios";
 import { Eye, EyeOff, Droplets, Heart, ChevronRight } from "lucide-react";
 import bgImage from "../assets/blood-bag-hero.jpg";
 
-const BLOOD_GROUPS = ["Select blood group", "A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
-
 export default function Login() {
   const [email, setEmail]               = useState("");
   const [password, setPassword]         = useState("");
-  const [bloodGroup, setBloodGroup]     = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError]               = useState("");
@@ -172,25 +169,6 @@ export default function Login() {
                 >
                   {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
-              </div>
-            </div>
-
-            {/* Blood Group */}
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
-                Blood Group
-              </label>
-              <div className="relative">
-                <select
-                  value={bloodGroup}
-                  onChange={(e) => setBloodGroup(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-sm font-semibold text-slate-500 focus:outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50 transition-all shadow-sm appearance-none cursor-pointer"
-                >
-                  {BLOOD_GROUPS.map((g) => (
-                    <option key={g} value={g === "Select blood group" ? "" : g}>{g}</option>
-                  ))}
-                </select>
-                <Droplets size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
               </div>
             </div>
 
