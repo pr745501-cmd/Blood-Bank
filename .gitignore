@@ -6,3 +6,5 @@ server/node_modules/
 dist/
 build/
 .DS_Store
+*.exe
+server/node_modules/.cache/
