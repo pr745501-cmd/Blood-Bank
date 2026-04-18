@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { FaArrowUp } from "react-icons/fa";
 
 export const isScrollToTopVisible = (scrollY) => scrollY > 300;
 
@@ -21,7 +22,7 @@ const ScrollToTopButton = () => {
       style={{ display: visible ? "block" : "none" }}
       aria-label="Scroll to top"
     >
-      <i className="fa fa-arrow-up" />
+      <FaArrowUp className="h-5 w-5" />
     </button>
   );
 };

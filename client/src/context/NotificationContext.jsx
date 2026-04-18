@@ -53,7 +53,12 @@ export function NotificationProvider({ children }) {
 
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-    const socket = io("http://localhost:5000", { transports: ["websocket"] });
+    const socket = io("http://localhost:5000", {
+      transports: ["polling", "websocket"],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+    });
     socketRef.current = socket;
 
     // Join personal room so targeted notifications reach this client
@@ -118,9 +123,26 @@ export function NotificationProvider({ children }) {
       }
     });
 
-    // Donor eligibility restored after 90-day cooldown
-    socket.on("donorEligible", () => {
+    // Request status updated by admin (approved, assigned, completed, rejected)
+    socket.on("requestStatusUpdate", (payload) => {
       add({
+        type: "requestUpdate",
+        title: payload.title,
+        body: payload.body,
+        link: "/my-requests",
+        requestId: payload.requestId,
+        status: payload.status,
+      });
+      if (Notification.permission === "granted") {
+        new Notification(payload.title, {
+          body: payload.body,
+          icon: "/favicon.ico",
+        });
+      }
+    });
+
+    // Donor eligibility restored after 90-day cooldown
+    socket.on("donorEligible", () => {      add({
         type: "eligibility",
         title: "🩸 You're Eligible to Donate!",
         body: "Your 90-day cooldown is complete. Schedule your next donation today.",

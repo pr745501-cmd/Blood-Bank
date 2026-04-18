@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+﻿import { useEffect, useState, useRef } from "react";
 import API from "../services/api";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -9,12 +9,12 @@ import { Droplets, Heart, Award, Calendar, TrendingUp, ShieldCheck, Star, Target
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid, Cell } from "recharts";
 
 const RANK_TIERS = [
-  { label: "New Member",  min: 0,  color: "text-slate-500",  bg: "bg-slate-100", icon: "??" },
-  { label: "Rising Star", min: 1,  color: "text-blue-600",   bg: "bg-blue-50",   icon: "?" },
-  { label: "Local Hero",  min: 3,  color: "text-indigo-600", bg: "bg-indigo-50", icon: "??" },
-  { label: "Elite",       min: 5,  color: "text-amber-600",  bg: "bg-amber-50",  icon: "??" },
-  { label: "Champion",    min: 10, color: "text-rose-600",   bg: "bg-rose-50",   icon: "??" },
-  { label: "Legend",      min: 25, color: "text-purple-600", bg: "bg-purple-50", icon: "??" },
+  { label: "New Member",  min: 0,  color: "text-slate-500",  bg: "bg-slate-100", icon: "🌱" },
+  { label: "Rising Star", min: 1,  color: "text-blue-600",   bg: "bg-blue-50",   icon: "⭐" },
+  { label: "Local Hero",  min: 3,  color: "text-indigo-600", bg: "bg-indigo-50", icon: "🦸" },
+  { label: "Elite",       min: 5,  color: "text-amber-600",  bg: "bg-amber-50",  icon: "🏅" },
+  { label: "Champion",    min: 10, color: "text-rose-600",   bg: "bg-rose-50",   icon: "🏆" },
+  { label: "Legend",      min: 25, color: "text-purple-600", bg: "bg-purple-50", icon: "👑" },
 ];
 function getRank(count) { return [...RANK_TIERS].reverse().find(r => count >= r.min) || RANK_TIERS[0]; }
 const MILESTONE_STEPS = [1, 3, 5, 10, 25, 50];
@@ -137,10 +137,10 @@ export default function MyCertificates() {
 
         {/* -- STATS GRID -- */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12">
-          <StatCard title="Total Donations" value={count}      icon="??" trend="Active" />
-          <StatCard title="Lives Saved"     value={lives}      icon="?" trend={`+${Math.max(lives,0)} Total`} />
+          <StatCard title="Total Donations" value={count}      icon="🩸" trend="Active" />
+          <StatCard title="Lives Saved"     value={lives}      icon="❤️" trend={`+${Math.max(lives,0)} Total`} />
           <StatCard title="Donor Rank"      value={rank.label} icon={rank.icon} trend="Earned" />
-          <StatCard title="Eligibility"     value={nextDate}   icon="???" trend="Ready soon" />
+          <StatCard title="Eligibility"     value={nextDate}   icon="📅" trend="Ready soon" />
         </div>
 
         <AnimatePresence mode="wait">
@@ -179,7 +179,7 @@ export default function MyCertificates() {
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-800 to-slate-700 flex items-center justify-center text-xl shadow-lg shadow-slate-200 group-hover/row:scale-110 transition-transform">
-                              <span className="grayscale brightness-200">??</span>
+                              <span className="grayscale brightness-200">🏅</span>
                             </div>
                             <div>
                               <p className="font-bold text-slate-800">Donation Certificate</p>
@@ -209,7 +209,7 @@ export default function MyCertificates() {
 
               {filtered.length === 0 && (
                 <div className="py-24 text-center">
-                  <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl animate-bounce">??</div>
+                  <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl animate-bounce">🩸</div>
                   <h3 className="text-2xl font-black text-slate-900">{search ? "No matches found" : "No Records Found"}</h3>
                   <p className="text-slate-400 mt-2 font-medium">{search ? "Try a different search term." : "Your first donation will unlock exclusive rewards."}</p>
                 </div>
@@ -234,7 +234,7 @@ export default function MyCertificates() {
                   const done = count >= m;
                   return (
                     <div key={m} className={`flex flex-col items-center p-3 rounded-2xl border-2 transition-all ${done ? "bg-red-50 border-red-100 text-red-600" : "bg-slate-50 border-transparent text-slate-300"}`}>
-                      <span className="text-lg">{done ? "?" : "??"}</span>
+                      <span className="text-lg">{done ? "✅" : "⭕"}</span>
                       <span className="text-xs font-black mt-1">{m}</span>
                       <span className="text-[8px] font-black uppercase tracking-widest">bags</span>
                     </div>
@@ -284,7 +284,7 @@ export default function MyCertificates() {
             {/* lives saved + units chart */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Units Donated � Last 12 Months</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Units Donated — Last 12 Months</p>
                 <p className="text-2xl font-black text-slate-900 mb-6">{totalUnits} <span className="text-sm font-bold text-slate-400">total units</span></p>
                 <div className="h-[180px]" style={{ minHeight: 180 }}>
                   <ResponsiveContainer width="100%" height="100%" minHeight={180} debounce={50}>
@@ -352,9 +352,9 @@ export default function MyCertificates() {
 
                 <div className="mt-8 pt-6 border-t border-slate-50 grid grid-cols-3 gap-4">
                   {[
-                    { label:"Avg Units/Donation", val: count>0?(totalUnits/count).toFixed(1):"�" },
+                    { label:"Avg Units/Donation", val: count>0?(totalUnits/count).toFixed(1):"—" },
                     { label:"Certificates Earned", val: certificates.length },
-                    { label:"Success Rate", val: count>0?`${successRate}%`:"�" },
+                    { label:"Success Rate", val: count>0?`${successRate}%`:"—" },
                   ].map(m => (
                     <div key={m.label} className="text-center p-4 bg-slate-50 rounded-2xl">
                       <p className="text-xl font-black text-slate-900">{m.val}</p>
@@ -365,17 +365,17 @@ export default function MyCertificates() {
               </div>
 
               <div className="bg-gradient-to-br from-red-500 to-rose-700 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-6 opacity-10 text-[8rem] leading-none select-none">??</div>
+                <div className="absolute top-0 right-0 p-6 opacity-10 text-[8rem] leading-none select-none">🩸</div>
                 <div className="relative z-10">
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-200 mb-4">Community Impact</p>
                   <div className="space-y-6">
                     {[
-                      { label:"Lives Saved",    val: lives,        icon:"??" },
-                      { label:"Units Donated",  val: totalUnits,   icon:"??" },
-                      { label:"Certs Earned",   val: certificates.length, icon:"??" },
+                      { label:"Lives Saved",    val: lives,        icon:"❤️" },
+                      { label:"Units Donated",  val: totalUnits,   icon:"🩸" },
+                      { label:"Certs Earned",   val: certificates.length, icon:"🏅" },
                       { label:"Donor Since",    val: certificates.length > 0
                           ? new Date(certificates[certificates.length-1]?.donationDate).toLocaleDateString("en-IN",{month:"short",year:"numeric"})
-                          : "�",                                   icon:"??" },
+                          : "—",                                   icon:"📅" },
                     ].map(m => (
                       <div key={m.label} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -429,7 +429,7 @@ export default function MyCertificates() {
                 <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse"/>
                 <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Official Verification System</span>
               </div>
-              <button onClick={() => setSelected(null)} className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all">?</button>
+              <button onClick={() => setSelected(null)} className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all">✕</button>
             </div>
             <div className="flex-1 overflow-auto p-4 md:p-12 bg-slate-200/50 flex flex-col items-center">
               <div className="bg-white p-2 shadow-2xl rounded-sm">
@@ -445,7 +445,7 @@ export default function MyCertificates() {
                 </div>
                 <div>
                   <p className="text-slate-900 font-black tracking-tight">Verified Document</p>
-                  <p className="text-xs font-bold text-slate-400">PDF Format � 300 DPI High Res</p>
+                  <p className="text-xs font-bold text-slate-400">PDF Format · 300 DPI High Res</p>
                 </div>
               </div>
               <div className="flex gap-3 w-full sm:w-auto">

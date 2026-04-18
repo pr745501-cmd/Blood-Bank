@@ -144,25 +144,23 @@ export default function CampCard({ camp, disabled = false, onRegister = () => {}
         <div className="flex gap-4">
           <button 
             onClick={() => onDetails?.(camp)}
-            className="flex-1 py-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 active:scale-95"
+            className={`${camp?.status === "completed" ? "flex-1" : ""} py-4 px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 active:scale-95`}
           >
-            <ShieldCheck size={16}/> Briefing
+            <ShieldCheck size={16}/> Details
           </button>
-          <button
-            disabled={disabled || full || camp?.status === "completed"}
-            onClick={() => onRegister?.(camp)}
-            className={`flex-[1.5] py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl ${
-              disabled || full || camp?.status === "completed"
-                ? "bg-slate-100 text-slate-400 cursor-not-allowed shadow-none"
-                : "bg-red-600 hover:bg-red-700 text-white shadow-red-900/20"
-            }`}
-          >
-            {full || camp?.status === "completed" ? (
-              "Node Locked"
-            ) : (
-              <><span>Authorize</span><ArrowRight size={16}/></>
-            )}
-          </button>
+          {camp?.status !== "completed" && (
+            <button
+              disabled={disabled || full}
+              onClick={() => onRegister?.(camp)}
+              className={`flex-[1.5] py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl ${
+                disabled || full
+                  ? "bg-slate-100 text-slate-400 cursor-not-allowed shadow-none"
+                  : "bg-red-600 hover:bg-red-700 text-white shadow-red-900/20"
+              }`}
+            >
+              {full ? "Fully Booked" : <><span>Register Now</span><ArrowRight size={16}/></>}
+            </button>
+          )}
         </div>
       </div>
     </motion.div>

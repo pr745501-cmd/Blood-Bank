@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FaBars, FaTimes } from "react-icons/fa";
 
 const NAV_LINKS = [
   { label: "About Us",  href: "#about" },
@@ -60,7 +61,7 @@ const Navbar = () => {
             onClick={() => setMenuOpen(true)}
             aria-label="Open menu"
           >
-            <i className="fa fa-bars" />
+            <FaBars className="h-6 w-6" />
           </button>
         </div>
       </div>
@@ -77,7 +78,7 @@ const Navbar = () => {
           onClick={() => setMenuOpen(false)}
           aria-label="Close menu"
         >
-          <i className="fa fa-times" />
+          <FaTimes className="h-6 w-6" />
         </button>
         <ul className="list-none m-0 p-0 flex flex-col gap-6">
           {NAV_LINKS.map(({ label, href }) => (

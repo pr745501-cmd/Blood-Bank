@@ -1,3 +1,5 @@
+import { FaFacebook, FaInstagram, FaGlobe } from "react-icons/fa";
+
 const Footer = () => (
   <footer id="footer" className="bg-[#111] text-white">
     {/* Main footer content */}
@@ -33,7 +35,7 @@ const Footer = () => (
             e.currentTarget.style.transform = "translateY(0)";
           }}
         >
-          <i className="fab fa-facebook" />
+          <FaFacebook className="h-7 w-7" />
         </a>
 
         <a
@@ -52,7 +54,7 @@ const Footer = () => (
             e.currentTarget.style.transform = "translateY(0)";
           }}
         >
-          <i className="fab fa-instagram" />
+          <FaInstagram className="h-7 w-7" />
         </a>
 
         <a
@@ -71,7 +73,7 @@ const Footer = () => (
             e.currentTarget.style.transform = "translateY(0)";
           }}
         >
-          <i className="fas fa-globe" />
+          <FaGlobe className="h-7 w-7" />
         </a>
       </div>
     </div>

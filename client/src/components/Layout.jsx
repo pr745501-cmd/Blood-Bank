@@ -265,7 +265,7 @@ export default function Layout({ children }) {
             {/* Notifications */}
             <div className="relative" ref={bellRef}>
               <button
-                onClick={() => { setBellOpen(o => !o); if (!bellOpen) markAllRead(); }}
+                onClick={() => setBellOpen(o => !o)}
                 className={`relative p-2 rounded-lg border transition-all
                   ${unread > 0
                     ? "bg-rose-50 border-rose-200 text-rose-600"
@@ -291,11 +291,18 @@ export default function Layout({ children }) {
                         </span>
                       )}
                     </div>
-                    {notifications.length > 0 && (
-                      <button onClick={clearAll} className="text-xs text-slate-400 hover:text-rose-600 font-medium transition-colors">
-                        Clear all
-                      </button>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {unread > 0 && (
+                        <button onClick={markAllRead} className="text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors">
+                          Mark all read
+                        </button>
+                      )}
+                      {notifications.length > 0 && (
+                        <button onClick={clearAll} className="text-xs text-slate-400 hover:text-rose-600 font-medium transition-colors">
+                          Clear all
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="max-h-80 overflow-y-auto">
@@ -314,9 +321,11 @@ export default function Layout({ children }) {
                         <div className={`p-1.5 rounded-lg shrink-0 mt-0.5
                           ${n.type === "alert" ? "bg-rose-100 text-rose-600"
                           : n.type === "certificate" ? "bg-amber-100 text-amber-600"
+                          : n.type === "requestUpdate" ? "bg-emerald-100 text-emerald-600"
                           : "bg-slate-100 text-slate-500"}`}>
                           {n.type === "alert" ? <AlertCircle size={14} />
                           : n.type === "certificate" ? <Award size={14} />
+                          : n.type === "requestUpdate" ? <Bell size={14} />
                           : <Bell size={14} />}
                         </div>
                         <div className="flex-1 min-w-0">

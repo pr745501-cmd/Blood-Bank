@@ -100,7 +100,7 @@ router.put("/update/:id", verifyToken, isAdmin, async (req, res) => {
 
     const { status } = req.body;
 
-    const request = await BloodRequest.findById(req.params.id);
+    const request = await BloodRequest.findById(req.params.id).populate("user", "name");
 
     if (!request) {
       return res.status(404).json({ message: "Request Not Found" });
@@ -108,6 +108,26 @@ router.put("/update/:id", verifyToken, isAdmin, async (req, res) => {
 
     request.status = status;
     await request.save();
+
+    // Notify the requester in real-time
+    const io = req.app.get("io");
+    if (io && request.user) {
+      const statusMessages = {
+        Approved: { title: "✅ Blood Request Approved", body: `Your request for ${request.bloodGroup} at ${request.hospital} has been approved.` },
+        Rejected: { title: "❌ Blood Request Rejected", body: `Your request for ${request.bloodGroup} at ${request.hospital} was rejected.` },
+        Completed: { title: "🎉 Blood Request Fulfilled", body: `Your request for ${request.bloodGroup} at ${request.hospital} has been completed.` },
+      };
+      const msg = statusMessages[status];
+      if (msg) {
+        io.to(request.user._id.toString()).emit("requestStatusUpdate", {
+          ...msg,
+          status,
+          requestId: request._id,
+          bloodGroup: request.bloodGroup,
+          hospital: request.hospital,
+        });
+      }
+    }
 
     res.json({
       message: "Request Status Updated Successfully",
@@ -126,7 +146,7 @@ router.put("/assign/:id", verifyToken, isAdmin, async (req, res) => {
 
     const { donorId } = req.body;
 
-    const request = await BloodRequest.findById(req.params.id);
+    const request = await BloodRequest.findById(req.params.id).populate("user", "name");
 
     if (!request) {
       return res.status(404).json({ message: "Request Not Found" });
@@ -152,6 +172,19 @@ router.put("/assign/:id", verifyToken, isAdmin, async (req, res) => {
       notes:       `Assigned for request by ${request.patientName}`,
       performedBy: "Admin"
     });
+
+    // Notify the requester in real-time
+    const io = req.app.get("io");
+    if (io && request.user) {
+      io.to(request.user._id.toString()).emit("requestStatusUpdate", {
+        title: "🩸 Donor Assigned to Your Request",
+        body: `A donor has been assigned for your ${request.bloodGroup} request at ${request.hospital}. Blood will be arranged shortly.`,
+        status: "Assigned",
+        requestId: request._id,
+        bloodGroup: request.bloodGroup,
+        hospital: request.hospital,
+      });
+    }
 
     res.json({
       message: "Donor Assigned Successfully",

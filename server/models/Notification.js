@@ -11,11 +11,11 @@ const notificationSchema = new mongoose.Schema(
     request: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BloodRequest",
-      required: true
+      required: false
     },
     type: {
       type: String,
-      enum: ["donorMatch"],
+      enum: ["donorMatch", "alert", "certificate", "eligibility", "low_stock"],
       default: "donorMatch"
     },
     message: {
@@ -30,8 +30,8 @@ const notificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Compound unique index — prevents duplicate notifications per donor per request
-notificationSchema.index({ user: 1, request: 1 }, { unique: true });
+// Compound unique index — prevents duplicate notifications per donor per request (only when request exists)
+notificationSchema.index({ user: 1, request: 1 }, { unique: true, sparse: true });
 
 const Notification =
   mongoose.models.Notification ||
