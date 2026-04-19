@@ -11,6 +11,25 @@ import {
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 const GENDERS = ["Male", "Female", "Other"];
+const PHONE_RE = /^[+]?[\d\s\-().]{7,15}$/;
+
+function validateStep0(form) {
+  const e = {};
+  if (!form.name.trim()) e.name = "Full name is required.";
+  if (!form.bloodGroup) e.bloodGroup = "Blood group is required.";
+  if (!form.mobile.trim()) e.mobile = "Mobile number is required.";
+  else if (!PHONE_RE.test(form.mobile)) e.mobile = "Enter a valid phone number.";
+  if (!form.city.trim()) e.city = "City is required.";
+  return e;
+}
+
+function validateStep1(form) {
+  const e = {};
+  if (!form.age) e.age = "Age is required.";
+  else if (Number(form.age) < 18 || Number(form.age) > 65) e.age = "Age must be between 18 and 65.";
+  if (!form.gender) e.gender = "Gender is required.";
+  return e;
+}
 
 const STEPS = [
   { id: 0, label: "Personal Information", desc: "Contact details & location" },
@@ -30,15 +49,22 @@ export default function Donor() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
+  const [serverError, setServerError] = useState("");
   const [cooldownMsg, setCooldownMsg] = useState("");
   const [quizGate, setQuizGate] = useState(null);
+  const [touched, setTouched] = useState({});
 
   const [formData, setFormData] = useState({
     name: "", bloodGroup: "", city: "",
     address: "", mobile: "", gender: "",
     age: "", lastDonationDate: ""
   });
+
+  const step0Errors = validateStep0(formData);
+  const step1Errors = validateStep1(formData);
+  const touch = (field) => setTouched(t => ({ ...t, [field]: true }));
+  const err0 = (f) => touched[f] && step0Errors[f];
+  const err1 = (f) => touched[f] && step1Errors[f];
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -66,34 +92,25 @@ export default function Donor() {
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    setError("");
-  };
-
-  const validateStep = () => {
-    if (step === 0) {
-      if (!formData.name.trim()) return "Full name is required.";
-      if (!formData.bloodGroup) return "Blood group is required.";
-      if (!formData.mobile.trim()) return "Mobile number is required.";
-      if (!formData.city.trim()) return "City is required.";
-    }
-    if (step === 1) {
-      if (!formData.age || Number(formData.age) < 18 || Number(formData.age) > 65)
-        return "Age must be between 18 and 65.";
-      if (!formData.gender) return "Gender is required.";
-    }
-    return "";
+    setServerError("");
   };
 
   const nextStep = () => {
-    const err = validateStep();
-    if (err) { setError(err); return; }
-    setError("");
+    if (step === 0) {
+      setTouched(t => ({ ...t, name: true, bloodGroup: true, mobile: true, city: true }));
+      if (Object.keys(step0Errors).length > 0) return;
+    }
+    if (step === 1) {
+      setTouched(t => ({ ...t, age: true, gender: true }));
+      if (Object.keys(step1Errors).length > 0) return;
+    }
+    setServerError("");
     setStep(s => s + 1);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setServerError("");
     setCooldownMsg("");
     setLoading(true);
 
@@ -110,7 +127,7 @@ export default function Donor() {
       if (msg.toLowerCase().includes("donate after") || msg.toLowerCase().includes("cooldown")) {
         setCooldownMsg(msg);
       } else {
-        setError(msg);
+        setServerError(msg);
       }
     } finally {
       setLoading(false);
@@ -304,11 +321,11 @@ export default function Donor() {
              
              {/* Dynamic Alerts */}
              <AnimatePresence>
-                {error && (
+                {serverError && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden bg-rose-50 border-b border-rose-100">
                     <div className="p-4 px-6 flex items-start gap-3">
                       <AlertCircle size={18} className="text-rose-600 shrink-0 mt-0.5" />
-                      <p className="text-sm font-medium text-rose-800">{error}</p>
+                      <p className="text-sm font-medium text-rose-800">{serverError}</p>
                     </div>
                   </motion.div>
                 )}
@@ -338,23 +355,34 @@ export default function Donor() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                            <InputGroup label="Full Name" required>
-                             <InputField icon={User} name="name" value={formData.name} onChange={handleChange} placeholder="John Doe" />
+                             <InputField icon={User} name="name" value={formData.name}
+                               onChange={handleChange} onBlur={() => touch("name")}
+                               placeholder="John Doe" hasError={!!err0("name")} />
+                             {err0("name") && <FieldError msg={step0Errors.name} />}
                            </InputGroup>
                            <InputGroup label="Blood Group" required>
                              <div className="relative">
-                               <select name="bloodGroup" value={formData.bloodGroup} onChange={handleChange}
-                                 className="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 text-sm font-medium text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none appearance-none transition-shadow shadow-sm">
+                               <select name="bloodGroup" value={formData.bloodGroup}
+                                 onChange={handleChange} onBlur={() => touch("bloodGroup")}
+                                 className={`w-full bg-white border rounded-lg py-2.5 px-4 text-sm font-medium text-slate-900 focus:ring-2 outline-none appearance-none transition-shadow shadow-sm ${err0("bloodGroup") ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"}`}>
                                  <option value="">Select blood group</option>
                                  {BLOOD_GROUPS.map(bg => <option key={bg} value={bg}>{bg}</option>)}
                                </select>
                                <ChevronRight size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" />
                              </div>
+                             {err0("bloodGroup") && <FieldError msg={step0Errors.bloodGroup} />}
                            </InputGroup>
                            <InputGroup label="Mobile Number" required>
-                             <InputField icon={Phone} name="mobile" value={formData.mobile} onChange={handleChange} placeholder="+1 (555) 000-0000" />
+                             <InputField icon={Phone} name="mobile" value={formData.mobile}
+                               onChange={handleChange} onBlur={() => touch("mobile")}
+                               placeholder="+1 (555) 000-0000" hasError={!!err0("mobile")} />
+                             {err0("mobile") && <FieldError msg={step0Errors.mobile} />}
                            </InputGroup>
                            <InputGroup label="City" required>
-                             <InputField icon={MapPin} name="city" value={formData.city} onChange={handleChange} placeholder="e.g. New York" />
+                             <InputField icon={MapPin} name="city" value={formData.city}
+                               onChange={handleChange} onBlur={() => touch("city")}
+                               placeholder="e.g. New York" hasError={!!err0("city")} />
+                             {err0("city") && <FieldError msg={step0Errors.city} />}
                            </InputGroup>
                            <div className="md:col-span-2">
                              <InputGroup label="Residential Address">
@@ -385,17 +413,22 @@ export default function Donor() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                            <InputGroup label="Age" required>
-                             <InputField icon={Calendar} type="number" name="age" min="18" max="65" value={formData.age} onChange={handleChange} placeholder="e.g. 28" />
+                             <InputField icon={Calendar} type="number" name="age" min="18" max="65"
+                               value={formData.age} onChange={handleChange} onBlur={() => touch("age")}
+                               placeholder="e.g. 28" hasError={!!err1("age")} />
+                             {err1("age") && <FieldError msg={step1Errors.age} />}
                            </InputGroup>
                            <InputGroup label="Gender" required>
                              <div className="relative">
-                               <select name="gender" value={formData.gender} onChange={handleChange}
-                                 className="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 text-sm font-medium text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none appearance-none transition-shadow shadow-sm">
+                               <select name="gender" value={formData.gender}
+                                 onChange={handleChange} onBlur={() => touch("gender")}
+                                 className={`w-full bg-white border rounded-lg py-2.5 px-4 text-sm font-medium text-slate-900 focus:ring-2 outline-none appearance-none transition-shadow shadow-sm ${err1("gender") ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"}`}>
                                  <option value="">Select gender</option>
                                  {GENDERS.map(g => <option key={g} value={g.toLowerCase()}>{g}</option>)}
                                </select>
                                <ChevronRight size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" />
                              </div>
+                             {err1("gender") && <FieldError msg={step1Errors.gender} />}
                            </InputGroup>
                            <div className="md:col-span-2">
                              <InputGroup label="Last Donation Date (If applicable)">
@@ -427,7 +460,7 @@ export default function Donor() {
                         </div>
 
                         <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
-                           <button onClick={() => { setStep(0); setError(""); }}
+                           <button onClick={() => { setStep(0); setServerError(""); }}
                              className="text-slate-500 hover:text-slate-800 font-medium py-2.5 px-4 transition-colors flex items-center gap-2 text-sm">
                              <ArrowLeft size={16} /> Back
                            </button>
@@ -479,7 +512,7 @@ export default function Donor() {
                         </div>
 
                         <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
-                           <button onClick={() => { setStep(1); setError(""); }}
+                           <button onClick={() => { setStep(1); setServerError(""); }}
                              className="text-slate-500 hover:text-slate-800 font-medium py-2.5 px-4 transition-colors flex items-center gap-2 text-sm">
                              <ArrowLeft size={16} /> Edit Details
                            </button>
@@ -513,7 +546,7 @@ function InputGroup({ label, required, children }) {
   );
 }
 
-function InputField({ icon: Icon, type = "text", ...props }) {
+function InputField({ icon: Icon, type = "text", hasError = false, ...props }) {
   return (
     <div className="relative">
       {Icon && (
@@ -524,8 +557,18 @@ function InputField({ icon: Icon, type = "text", ...props }) {
       <input
         type={type}
         {...props}
-        className={`w-full bg-white border border-slate-300 rounded-lg py-2.5 ${Icon ? "pl-11" : "px-4"} pr-4 text-sm font-medium text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-shadow shadow-sm placeholder:text-slate-400`}
+        className={`w-full bg-white border rounded-lg py-2.5 ${Icon ? "pl-11" : "px-4"} pr-4 text-sm font-medium text-slate-900 focus:ring-2 outline-none transition-shadow shadow-sm placeholder:text-slate-400
+          ${hasError ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"}`}
       />
     </div>
+  );
+}
+
+function FieldError({ msg }) {
+  return (
+    <p className="text-xs text-rose-500 font-semibold mt-1 flex items-center gap-1">
+      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 flex-shrink-0" />
+      {msg}
+    </p>
   );
 }

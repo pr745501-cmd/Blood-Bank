@@ -11,6 +11,29 @@ import {
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
+const PHONE_RE = /^[+]?[\d\s\-().]{7,15}$/;
+
+function validateStep0(form) {
+  const e = {};
+  if (!form.patientName.trim()) e.patientName = "Patient name is required.";
+  if (!form.bloodGroup) e.bloodGroup = "Blood group is required.";
+  if (!form.units || Number(form.units) < 1) e.units = "At least 1 unit is required.";
+  if (!form.hospital.trim()) e.hospital = "Facility name is required.";
+  if (!form.city.trim()) e.city = "City is required.";
+  return e;
+}
+
+function validateStep1(form) {
+  const e = {};
+  if (!form.contactName.trim()) e.contactName = "Contact name is required.";
+  if (!form.contactPhone.trim()) e.contactPhone = "Contact phone is required.";
+  else if (!PHONE_RE.test(form.contactPhone)) e.contactPhone = "Enter a valid phone number.";
+  if (!form.urgency) e.urgency = "Urgency level is required.";
+  if (!form.requiredDate) e.requiredDate = "Target date is required.";
+  else if (new Date(form.requiredDate) < new Date(new Date().toDateString())) e.requiredDate = "Date cannot be in the past.";
+  return e;
+}
+
 const URGENCY_CONFIG = {
   Normal:   { color: "text-blue-700 bg-blue-50 border-blue-200",  dot: "bg-blue-500",  ring: "focus:ring-blue-500/20" },
   Urgent:   { color: "text-amber-700 bg-amber-50 border-amber-200",  dot: "bg-amber-500",  ring: "focus:ring-amber-500/20" },
@@ -34,7 +57,8 @@ export default function Request() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
-  const [error, setError] = useState("");
+  const [serverError, setServerError] = useState("");
+  const [touched, setTouched] = useState({});
 
   const [form, setForm] = useState({
     patientName: "", bloodGroup: "", units: "1",
@@ -42,6 +66,14 @@ export default function Request() {
     contactName: "", contactPhone: "",
     urgency: "Normal", requiredDate: "", notes: ""
   });
+
+  // Per-step field errors
+  const step0Errors = validateStep0(form);
+  const step1Errors = validateStep1(form);
+
+  const touch = (field) => setTouched(t => ({ ...t, [field]: true }));
+  const err0 = (f) => touched[f] && step0Errors[f];
+  const err1 = (f) => touched[f] && step1Errors[f];
 
   // Pre-fill contact from logged-in user
   useEffect(() => {
@@ -58,42 +90,32 @@ export default function Request() {
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    setError("");
-  };
-
-  const validateStep = () => {
-    if (step === 0) {
-      if (!form.patientName.trim()) return "Patient name is required.";
-      if (!form.bloodGroup) return "Blood group is required.";
-      if (!form.units || Number(form.units) < 1) return "Units must be at least 1.";
-      if (!form.hospital.trim()) return "Facility name is required.";
-      if (!form.city.trim()) return "City is required.";
-    }
-    if (step === 1) {
-      if (!form.contactName.trim()) return "Primary contact name is required.";
-      if (!form.contactPhone.trim()) return "Contact phone number is required.";
-      if (!form.urgency) return "Urgency classification is required.";
-      if (!form.requiredDate) return "Target date is required.";
-    }
-    return "";
+    setServerError("");
   };
 
   const nextStep = () => {
-    const err = validateStep();
-    if (err) { setError(err); return; }
-    setError("");
+    if (step === 0) {
+      // Touch all step-0 fields
+      setTouched(t => ({ ...t, patientName: true, bloodGroup: true, units: true, hospital: true, city: true }));
+      if (Object.keys(step0Errors).length > 0) return;
+    }
+    if (step === 1) {
+      setTouched(t => ({ ...t, contactName: true, contactPhone: true, urgency: true, requiredDate: true }));
+      if (Object.keys(step1Errors).length > 0) return;
+    }
+    setServerError("");
     setStep(s => s + 1);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setServerError("");
     setLoading(true);
     try {
       const res = await API.post("/request/create", form);
       setSuccess(res.data.request);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to broadcast request. Please try again or contact support.");
+      setServerError(err.response?.data?.message || "Failed to broadcast request. Please try again or contact support.");
     } finally {
       setLoading(false);
     }
@@ -241,11 +263,11 @@ export default function Request() {
              
              {/* Dynamic Alerts */}
              <AnimatePresence>
-                {error && (
+                {serverError && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden bg-rose-50 border-b border-rose-100">
                     <div className="p-4 px-6 flex items-start gap-3">
                       <AlertCircle size={18} className="text-rose-600 shrink-0 mt-0.5" />
-                      <p className="text-sm font-medium text-rose-800">{error}</p>
+                      <p className="text-sm font-medium text-rose-800">{serverError}</p>
                     </div>
                   </motion.div>
                 )}
@@ -264,41 +286,54 @@ export default function Request() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                            <InputGroup label="Patient Legal Name" required>
-                             <InputField icon={User} name="patientName" value={form.patientName} onChange={handleChange} placeholder="First Last" />
+                             <InputField icon={User} name="patientName" value={form.patientName}
+                               onChange={handleChange} onBlur={() => touch("patientName")}
+                               placeholder="First Last" hasError={!!err0("patientName")} />
+                             {err0("patientName") && <FieldError msg={step0Errors.patientName} />}
                            </InputGroup>
 
                            <InputGroup label="Blood Group Classification" required>
                              <div className="relative">
-                               <select name="bloodGroup" value={form.bloodGroup} onChange={handleChange}
-                                 className="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 text-sm font-medium text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none appearance-none shadow-sm transition-shadow">
+                               <select name="bloodGroup" value={form.bloodGroup}
+                                 onChange={handleChange} onBlur={() => touch("bloodGroup")}
+                                 className={`w-full bg-white border rounded-lg py-2.5 px-4 text-sm font-medium text-slate-900 focus:ring-2 outline-none appearance-none shadow-sm transition-shadow ${err0("bloodGroup") ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"}`}>
                                  <option value="">Select compatible type</option>
                                  {BLOOD_GROUPS.map(bg => <option key={bg} value={bg}>{bg}</option>)}
                                </select>
                                <ChevronRight size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" />
                              </div>
+                             {err0("bloodGroup") && <FieldError msg={step0Errors.bloodGroup} />}
                            </InputGroup>
 
                            <InputGroup label="Target Volume (Units)" required>
                              <div className="flex items-center gap-3">
-                               <button type="button" onClick={() => setForm(p => ({ ...p, units: String(Math.max(1, Number(p.units || 1) - 1)) }))}
+                               <button type="button" onClick={() => { setForm(p => ({ ...p, units: String(Math.max(1, Number(p.units || 1) - 1)) })); touch("units"); }}
                                  className="w-11 h-11 rounded-lg border border-slate-300 bg-slate-50 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition-colors shadow-sm active:scale-95">
                                  <Minus size={18} />
                                </button>
-                               <input type="number" min="1" max="20" name="units" value={form.units} onChange={handleChange}
-                                 className="flex-1 text-center bg-white border border-slate-300 rounded-lg py-2.5 px-3 text-base font-semibold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm transition-shadow" />
-                               <button type="button" onClick={() => setForm(p => ({ ...p, units: String(Number(p.units || 0) + 1) }))}
+                               <input type="number" min="1" max="20" name="units" value={form.units}
+                                 onChange={handleChange} onBlur={() => touch("units")}
+                                 className={`flex-1 text-center bg-white border rounded-lg py-2.5 px-3 text-base font-semibold text-slate-900 focus:ring-2 outline-none shadow-sm transition-shadow ${err0("units") ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"}`} />
+                               <button type="button" onClick={() => { setForm(p => ({ ...p, units: String(Number(p.units || 0) + 1) })); touch("units"); }}
                                  className="w-11 h-11 rounded-lg border border-slate-300 bg-slate-50 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition-colors shadow-sm active:scale-95">
                                  <Plus size={18} />
                                </button>
                              </div>
+                             {err0("units") && <FieldError msg={step0Errors.units} />}
                            </InputGroup>
 
                            <InputGroup label="Receiving Facility" required>
-                             <InputField icon={Building2} name="hospital" value={form.hospital} onChange={handleChange} placeholder="General Hospital" />
+                             <InputField icon={Building2} name="hospital" value={form.hospital}
+                               onChange={handleChange} onBlur={() => touch("hospital")}
+                               placeholder="General Hospital" hasError={!!err0("hospital")} />
+                             {err0("hospital") && <FieldError msg={step0Errors.hospital} />}
                            </InputGroup>
 
                            <InputGroup label="Operational Sector (City)" required>
-                             <InputField icon={MapPin} name="city" value={form.city} onChange={handleChange} placeholder="e.g. New York Region" />
+                             <InputField icon={MapPin} name="city" value={form.city}
+                               onChange={handleChange} onBlur={() => touch("city")}
+                               placeholder="e.g. New York Region" hasError={!!err0("city")} />
+                             {err0("city") && <FieldError msg={step0Errors.city} />}
                            </InputGroup>
 
                            <div className="md:col-span-2">
@@ -332,13 +367,22 @@ export default function Request() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                            <InputGroup label="Primary Contact Name" required>
-                             <InputField icon={User} name="contactName" value={form.contactName} onChange={handleChange} placeholder="Attending officer/relative" />
+                             <InputField icon={User} name="contactName" value={form.contactName}
+                               onChange={handleChange} onBlur={() => touch("contactName")}
+                               placeholder="Attending officer/relative" hasError={!!err1("contactName")} />
+                             {err1("contactName") && <FieldError msg={step1Errors.contactName} />}
                            </InputGroup>
                            <InputGroup label="Contact Number" required>
-                             <InputField icon={Phone} name="contactPhone" value={form.contactPhone} onChange={handleChange} placeholder="+1 555-0123" />
+                             <InputField icon={Phone} name="contactPhone" value={form.contactPhone}
+                               onChange={handleChange} onBlur={() => touch("contactPhone")}
+                               placeholder="+1 555-0123" hasError={!!err1("contactPhone")} />
+                             {err1("contactPhone") && <FieldError msg={step1Errors.contactPhone} />}
                            </InputGroup>
                            <InputGroup label="Target Need Date" required>
-                             <InputField icon={Calendar} type="date" name="requiredDate" value={form.requiredDate} onChange={handleChange} />
+                             <InputField icon={Calendar} type="date" name="requiredDate" value={form.requiredDate}
+                               onChange={handleChange} onBlur={() => touch("requiredDate")}
+                               hasError={!!err1("requiredDate")} />
+                             {err1("requiredDate") && <FieldError msg={step1Errors.requiredDate} />}
                            </InputGroup>
                         </div>
 
@@ -376,7 +420,7 @@ export default function Request() {
                         )}
 
                         <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
-                           <button onClick={() => { setStep(0); setError(""); }}
+                           <button onClick={() => { setStep(0); setServerError(""); }}
                              className="text-slate-500 hover:text-slate-800 font-medium py-2.5 px-4 transition-colors flex items-center gap-2 text-sm">
                              <ArrowLeft size={16} /> Back
                            </button>
@@ -399,7 +443,7 @@ export default function Request() {
                         <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
                            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-white">
                               <h3 className="text-sm font-semibold text-slate-800">Payload Overview</h3>
-                              <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${URGENCY_CONFIG[form.urgency].badge}`}>
+                              <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${URGENCY_CONFIG[form.urgency]?.color || ""}`}>
                                 {form.urgency} Priority
                               </div>
                            </div>
@@ -431,7 +475,7 @@ export default function Request() {
                         </div>
 
                         <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
-                           <button onClick={() => { setStep(1); setError(""); }}
+                           <button onClick={() => { setStep(1); setServerError(""); }}
                              className="text-slate-500 hover:text-slate-800 font-medium py-2.5 px-4 transition-colors flex items-center gap-2 text-sm">
                              <ArrowLeft size={16} /> Edit Data
                            </button>
@@ -465,7 +509,7 @@ function InputGroup({ label, required, children }) {
   );
 }
 
-function InputField({ icon: Icon, type = "text", ...props }) {
+function InputField({ icon: Icon, type = "text", hasError = false, ...props }) {
   return (
     <div className="relative group">
       {Icon && (
@@ -476,8 +520,18 @@ function InputField({ icon: Icon, type = "text", ...props }) {
       <input
         type={type}
         {...props}
-        className={`w-full bg-white border border-slate-300 rounded-lg py-2.5 ${Icon ? "pl-11" : "px-4"} pr-4 text-sm font-medium text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-shadow shadow-sm placeholder:text-slate-400`}
+        className={`w-full bg-white border rounded-lg py-2.5 ${Icon ? "pl-11" : "px-4"} pr-4 text-sm font-medium text-slate-900 focus:ring-2 outline-none transition-shadow shadow-sm placeholder:text-slate-400
+          ${hasError ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"}`}
       />
     </div>
+  );
+}
+
+function FieldError({ msg }) {
+  return (
+    <p className="text-xs text-rose-500 font-semibold mt-1 flex items-center gap-1">
+      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 flex-shrink-0" />
+      {msg}
+    </p>
   );
 }

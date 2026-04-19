@@ -4,55 +4,66 @@ import axios from "axios";
 import { Eye, EyeOff, Droplets, Heart, ChevronRight } from "lucide-react";
 import bgImage from "../assets/blood-bag-hero.jpg";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validate({ email, password }) {
+  const errs = {};
+  if (!email.trim()) errs.email = "Email is required.";
+  else if (!EMAIL_RE.test(email)) errs.email = "Enter a valid email address.";
+  if (!password) errs.password = "Password is required.";
+  return errs;
+}
+
 export default function Login() {
   const [email, setEmail]               = useState("");
   const [password, setPassword]         = useState("");
+  const [touched, setTouched]           = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError]               = useState("");
+  const [serverError, setServerError]   = useState("");
   const navigate = useNavigate();
+
+  const fieldErrors = validate({ email, password });
+  const touch = (field) => () => setTouched((t) => ({ ...t, [field]: true }));
+  const err   = (field) => touched[field] && fieldErrors[field];
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setServerError("");
+    setTouched({ email: true, password: true });
+    if (Object.keys(fieldErrors).length > 0) return;
+
     setIsSubmitting(true);
-    setError("");
     try {
       const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify({ ...res.data.user, _id: res.data.user._id || res.data.user.id }));
       navigate(res.data.user.role === "admin" ? "/admin" : "/dashboard");
-    } catch (err) {
-      setError(err.response?.data?.message || "Invalid email or password.");
+    } catch (e) {
+      setServerError(e.response?.data?.message || "Invalid email or password.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const inputBase = "w-full px-4 py-3.5 bg-white border-2 rounded-2xl text-sm font-semibold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-4 transition-all shadow-sm";
+  const inputNormal = `${inputBase} border-slate-100 focus:border-red-400 focus:ring-red-50`;
+  const inputError  = `${inputBase} border-red-400 focus:border-red-400 focus:ring-red-50`;
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
 
       {/* ── LEFT HERO PANEL ── */}
       <div className="relative lg:w-[55%] min-h-[280px] lg:min-h-screen flex flex-col justify-between overflow-hidden">
-        {/* Background image */}
-        <img
-          src={bgImage}
-          alt="Blood donation"
-          className="absolute inset-0 w-full h-full object-cover object-center"
-        />
-        {/* Layered overlays */}
+        <img src={bgImage} alt="Blood donation" className="absolute inset-0 w-full h-full object-cover object-center" />
         <div className="absolute inset-0 bg-gradient-to-br from-red-950/90 via-red-900/75 to-rose-800/60" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-        {/* Decorative blobs */}
         <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-red-500/20 blur-3xl" />
         <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full bg-rose-600/20 blur-3xl" />
 
-        {/* Floating stat cards — hidden on small screens */}
+        {/* Floating stat cards */}
         <div className="absolute top-8 right-8 hidden xl:flex flex-col gap-3">
-          {[
-            { val: "50K+", label: "Lives Saved" },
-            { val: "5K+",  label: "Active Donors" },
-          ].map(({ val, label }) => (
+          {[{ val: "50K+", label: "Lives Saved" }, { val: "5K+", label: "Active Donors" }].map(({ val, label }) => (
             <div key={label} className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-4 py-3 text-white text-right">
               <p className="text-2xl font-black leading-none">{val}</p>
               <p className="text-xs text-white/70 mt-0.5">{label}</p>
@@ -60,9 +71,7 @@ export default function Login() {
           ))}
         </div>
 
-        {/* Main hero content */}
         <div className="relative z-10 flex flex-col justify-center flex-1 px-8 sm:px-14 py-12 lg:py-0">
-          {/* Logo */}
           <div className="flex items-center gap-2.5 mb-10 lg:mb-16">
             <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center border border-white/30">
               <Droplets size={20} className="text-white" />
@@ -76,16 +85,13 @@ export default function Login() {
             <p className="text-red-300 text-sm font-bold tracking-[0.25em] uppercase mb-3">Donate Blood · Save Life</p>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.05] mb-5">
               Every Drop<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-300 to-rose-200">
-                Counts.
-              </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-300 to-rose-200">Counts.</span>
             </h1>
             <p className="text-white/70 text-base sm:text-lg leading-relaxed max-w-sm">
               Sign in to track your donations, respond to emergency requests, and keep saving lives.
             </p>
           </div>
 
-          {/* Pulse line decoration */}
           <div className="mt-10 hidden sm:block">
             <svg viewBox="0 0 300 50" className="w-64 opacity-40" fill="none">
               <polyline
@@ -96,7 +102,6 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Bottom tagline */}
         <div className="relative z-10 px-8 sm:px-14 pb-8 hidden lg:flex items-center gap-2">
           <Heart size={14} className="text-red-400 fill-red-400" />
           <p className="text-white/40 text-xs font-semibold">© 2026 BloodConnect · Saving lives together</p>
@@ -112,26 +117,22 @@ export default function Login() {
             <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center">
               <Droplets size={18} className="text-white" />
             </div>
-            <span className="text-xl font-black text-slate-900">
-              Blood<span className="text-red-600">Connect</span>
-            </span>
+            <span className="text-xl font-black text-slate-900">Blood<span className="text-red-600">Connect</span></span>
           </div>
 
-          {/* Heading */}
           <div className="mb-8">
             <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Welcome back</h2>
             <p className="text-slate-400 mt-2 text-sm">Sign in to your account to continue</p>
           </div>
 
-          {/* Error */}
-          {error && (
+          {serverError && (
             <div className="mb-6 flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm font-semibold">
               <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
-              {error}
+              {serverError}
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} noValidate className="space-y-5">
 
             {/* Email */}
             <div>
@@ -143,9 +144,10 @@ export default function Login() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-sm font-semibold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50 transition-all shadow-sm"
+                onBlur={touch("email")}
+                className={err("email") ? inputError : inputNormal}
               />
+              {err("email") && <p className={errCls}>{fieldErrors.email}</p>}
             </div>
 
             {/* Password */}
@@ -159,8 +161,8 @@ export default function Login() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-3.5 pr-12 bg-white border-2 border-slate-100 rounded-2xl text-sm font-semibold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50 transition-all shadow-sm"
+                  onBlur={touch("password")}
+                  className={(err("password") ? inputError : inputNormal) + " pr-12"}
                 />
                 <button
                   type="button"
@@ -170,6 +172,7 @@ export default function Login() {
                   {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
+              {err("password") && <p className={errCls}>{fieldErrors.password}</p>}
             </div>
 
             {/* Submit */}
@@ -190,20 +193,15 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Divider */}
           <div className="flex items-center gap-4 my-7">
             <div className="flex-1 h-px bg-slate-100" />
             <span className="text-xs text-slate-300 font-bold">OR</span>
             <div className="flex-1 h-px bg-slate-100" />
           </div>
 
-          {/* Register link */}
           <div className="text-center">
             <p className="text-sm text-slate-500 mb-1">Don't have an account?</p>
-            <Link
-              to="/register"
-              className="inline-flex items-center gap-1 text-sm font-black text-red-600 hover:text-red-700 transition-colors"
-            >
+            <Link to="/register" className="inline-flex items-center gap-1 text-sm font-black text-red-600 hover:text-red-700 transition-colors">
               Register Now <ChevronRight size={14} />
             </Link>
           </div>
@@ -219,3 +217,5 @@ export default function Login() {
     </div>
   );
 }
+
+const errCls = "text-xs text-red-500 font-semibold mt-1.5 flex items-center gap-1 before:content-[''] before:w-1.5 before:h-1.5 before:rounded-full before:bg-red-500 before:flex-shrink-0";
