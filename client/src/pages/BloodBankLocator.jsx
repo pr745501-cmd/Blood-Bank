@@ -22,17 +22,37 @@ const CATEGORY_FILTERS = [
   { id: "camp", label: "Blood Camps", icon: Tent },
 ];
 
-// Backend proxy — calls our Express server which handles Overpass mirrors server-side
+// Backend proxy — calls our Express server which handles Overpass mirrors + Nominatim fallback
 async function fetchNearbyFromBackend(lat, lon, radius = 15000) {
   const res = await fetch(
     `http://localhost:5000/api/nearby?lat=${lat}&lon=${lon}&radius=${radius}`
   );
-  if (!res.ok) throw new Error("Backend nearby API failed");
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || "Failed to fetch nearby facilities.");
+  }
   return await res.json();
 }
 
+const BLOOD_BANK_KEYWORDS = [
+  "blood bank", "blood centre", "blood center", "blood storage",
+  "raktadan", "rakt kosh", "blood donation", "blood collection",
+];
+
+function isBloodBankName(name = "") {
+  const lower = name.toLowerCase();
+  return BLOOD_BANK_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
 function getCategory(tags) {
-  if (tags?.amenity === "blood_bank" || tags?.healthcare === "blood_bank") return "blood_bank";
+  if (
+    tags?.amenity === "blood_bank" ||
+    tags?.healthcare === "blood_bank" ||
+    tags?.healthcare === "blood_donation" ||
+    tags?.blood_bank === "yes" ||
+    isBloodBankName(tags?.name || "") ||
+    isBloodBankName(tags?.["name:en"] || "")
+  ) return "blood_bank";
   if (tags?.amenity === "hospital" || tags?.healthcare === "hospital") return "hospital";
   return "hospital";
 }
@@ -69,6 +89,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 
 export default function BloodBankLocator() {
   const [userLocation, setUserLocation] = useState(null);
+  const [lastSearchCoords, setLastSearchCoords] = useState(null);
   const [places, setPlaces] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [activeFilter, setActiveFilter] = useState("all");
@@ -161,6 +182,7 @@ export default function BloodBankLocator() {
   async function fetchNearby(lat, lon) {
     setLoading(true);
     setLocError("");
+    setLastSearchCoords({ lat, lon });
     try {
       const data = await fetchNearbyFromBackend(lat, lon, 15000);
       const results = (data.elements || [])
@@ -184,8 +206,8 @@ export default function BloodBankLocator() {
 
       setPlaces(results);
       if (results.length === 0) setLocError("No facilities found within 15 km. Try a different location.");
-    } catch {
-      setLocError("Failed to fetch nearby facilities. Please try again.");
+    } catch (err) {
+      setLocError(err.message || "Failed to fetch nearby facilities. Please try again.");
     }
     setLoading(false);
   }
@@ -296,7 +318,16 @@ export default function BloodBankLocator() {
 
           {locError && (
             <div className="mt-4 flex items-center gap-3 bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-2xl text-sm font-semibold">
-              <AlertCircle size={16} className="flex-shrink-0" /> {locError}
+              <AlertCircle size={16} className="flex-shrink-0" />
+              <span className="flex-1">{locError}</span>
+              {lastSearchCoords && (
+                <button
+                  onClick={() => fetchNearby(lastSearchCoords.lat, lastSearchCoords.lon)}
+                  className="ml-2 text-xs font-black underline hover:text-red-900 flex-shrink-0"
+                >
+                  Retry
+                </button>
+              )}
             </div>
           )}
         </div>
